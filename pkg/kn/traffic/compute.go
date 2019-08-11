@@ -238,6 +238,10 @@ func verifyInputSanity(trafficFlags *flags.Traffic) error {
 			return fmt.Errorf("error converting given %s to integer value for traffic distribution", percent)
 		}
 
+		if percentInt < 0 || percentInt > 100 {
+			return errors.New(fmt.Sprintf("given traffic percent to %d, expected 0 <= percent <= 100", percentInt))
+		}
+
 		if latestRevisionTraffic && revisionRef == latestRevisionRef {
 			return errorRepeatingLatestRevision("--traffic")
 		}
