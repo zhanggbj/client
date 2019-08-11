@@ -197,9 +197,14 @@ func errorOverWritingTag(tag string) error {
 		"add flag '--untag %s' in command to untag it", tag)
 }
 
-func errorRepeatingLatestRevision(forFlag string) error {
-	return fmt.Errorf("repetition of identifier %s "+
-		"is not allowed, use only once with %s flag", latestRevisionRef, forFlag)
+func errorRepeatingRevision(forFlag string, name string) error {
+	if name == latestRevisionRef {
+		name = "identifier " + latestRevisionRef
+	} else {
+		name = "revision reference " + name
+	}
+	return fmt.Errorf("repetition of %s "+
+		"is not allowed, use only once with %s flag", name, forFlag)
 }
 
 // verifies if user has repeated @latest field in --tag or --traffic flags
@@ -208,7 +213,6 @@ func errorRepeatingLatestRevision(forFlag string) error {
 // - if provided traffic portion are integers
 func verifyInputSanity(trafficFlags *flags.Traffic) error {
 	var latestRevisionTag = false
-	var latestRevisionTraffic = false
 	var sum = 0
 
 	for _, each := range trafficFlags.RevisionsTags {
@@ -218,8 +222,7 @@ func verifyInputSanity(trafficFlags *flags.Traffic) error {
 		}
 
 		if latestRevisionTag && revision == latestRevisionRef {
-			return errorRepeatingLatestRevision("--tag")
-
+			return errorRepeatingRevision("--tag", latestRevisionRef)
 		}
 
 		if revision == latestRevisionRef {
@@ -227,10 +230,18 @@ func verifyInputSanity(trafficFlags *flags.Traffic) error {
 		}
 	}
 
-	for _, each := range trafficFlags.RevisionsPercentages {
+	revisionRefMap := make(map[string]int)
+	for i, each := range trafficFlags.RevisionsPercentages {
 		revisionRef, percent, err := splitByEqualSign(each)
 		if err != nil {
 			return err
+		}
+
+		// To check if there are duplicate revision names in traffic flags
+		if _, exist := revisionRefMap[revisionRef]; exist {
+			return errorRepeatingRevision("--traffic", revisionRef)
+		} else {
+			revisionRefMap[revisionRef] = i
 		}
 
 		percentInt, err := strconv.Atoi(percent)
@@ -238,12 +249,8 @@ func verifyInputSanity(trafficFlags *flags.Traffic) error {
 			return fmt.Errorf("error converting given %s to integer value for traffic distribution", percent)
 		}
 
-		if latestRevisionTraffic && revisionRef == latestRevisionRef {
-			return errorRepeatingLatestRevision("--traffic")
-		}
-
-		if revisionRef == latestRevisionRef {
-			latestRevisionTraffic = true
+		if percentInt < 0 || percentInt > 100 {
+			return fmt.Errorf("invalid value for traffic percent %d, expected 0 <= percent <= 100", percentInt)
 		}
 
 		sum += percentInt

@@ -265,6 +265,18 @@ func TestComputeErrMsg(t *testing.T) {
 			[]string{"--traffic", "@latest=19,echo-v1=71"},
 			"given traffic percents sum to 90, want 100",
 		},
+		{
+			"verify error for values out of range given to percent",
+			append(newServiceTraffic([]v1alpha1.TrafficTarget{}), newTarget("", "", 100, true)),
+			[]string{"--traffic", "@latest=-100"},
+			"invalid value for traffic percent -100, expected 0 <= percent <= 100",
+		},
+		{
+			"repeatedly spliting traffic to the same revision",
+			append(newServiceTraffic([]v1alpha1.TrafficTarget{}), newTarget("", "", 100, true)),
+			[]string{"--traffic", "echo-v1=40", "--traffic", "echo-v1=60"},
+			"repetition of revision reference echo-v1 is not allowed, use only once with --traffic flag",
+		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			testCmd, tFlags := newTestTrafficCommand()
