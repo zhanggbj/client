@@ -77,23 +77,22 @@ func formatActualTargets(t *testing.T, actualTargets []string) (formattedTargets
 
 // TestTrafficSplit runs different e2e tests for service traffic splitting and verifies the traffic targets from service status
 func TestTrafficSplit(t *testing.T) {
+	t.Parallel()
 	test := NewE2eTest(t)
 	test.Setup(t)
 	defer test.Teardown(t)
-	tCase := 0
+
 	serviceBase := "echo"
-	serviceName := ""
 	t.Run("tag two revisions as v1 and v2 and give 50-50% share",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			test.serviceUpdateWithOptions(t, serviceName, []string{"--env", "TARGET=v1"})
 			rev1 := test.latestRevisionOfService(t, serviceName)
 			test.serviceUpdateWithOptions(t, serviceName, []string{"--env", "TARGET=v2"})
 			rev2 := test.latestRevisionOfService(t, serviceName)
 
-			tflags := []string{"--tag", fmt.Sprintf("%s=%s,%s=%s", rev1, "v1", rev2, "v2"),
+			tflags := []string{"--tag", fmt.Sprintf("%s=v1,%s=v2", rev1, rev2),
 				"--traffic", "v1=50,v2=50"}
 			test.serviceUpdateWithOptions(t, serviceName, tflags)
 
@@ -105,8 +104,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("ramp/up down a revision to 20% adjusting other traffic to accommodate",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			test.serviceUpdateWithOptions(t, serviceName, []string{"--env", "TARGET=v1"})
 			rev1 := test.latestRevisionOfService(t, serviceName)
@@ -123,8 +121,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("tag a revision as candidate, without otherwise changing any traffic split",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 			test.serviceUpdateWithOptions(t, serviceName, []string{"--env", "TARGET=v1"})
@@ -140,8 +137,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("tag a revision as candidate, set 2% traffic adjusting other traffic to accommodate",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 			test.serviceUpdateWithOptions(t, serviceName, []string{"--env", "TARGET=v1"})
@@ -158,8 +154,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("update tag for a revision from candidate to current, tag current is present on another revision",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			// make available 3 revisions for service first
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
@@ -187,8 +182,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("update tag from testing to staging for @latest revision",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
@@ -207,8 +201,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("update tag from testing to staging for a revision (non @latest)",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
@@ -232,8 +225,7 @@ func TestTrafficSplit(t *testing.T) {
 	// test reducing number of targets from traffic blockdd
 	t.Run("remove a revision with tag old from traffic block entierly",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
@@ -256,8 +248,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("tag a revision as stable and current with 50-50% traffic",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
@@ -276,8 +267,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("revert all traffic to latest ready revision of service",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
@@ -299,8 +289,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("tag latest ready revision of service as current",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			// existing state: latest revision has no tag
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
@@ -316,8 +305,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("update tag for a revision as testing and assign all the traffic to it:",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
@@ -343,8 +331,7 @@ func TestTrafficSplit(t *testing.T) {
 	)
 	t.Run("replace latest tag of a revision with old and give latest to another revision",
 		func(t *testing.T) {
-			serviceName = serviceBase + strconv.Itoa(tCase)
-			tCase++
+			serviceName := getServiceNameAndIncrement(serviceBase)
 			test.serviceCreate(t, serviceName)
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
