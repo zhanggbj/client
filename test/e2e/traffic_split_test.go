@@ -206,7 +206,6 @@ func TestTrafficSplit(t *testing.T) {
 			rev1 := test.latestRevisionOfService(t, serviceName)
 
 			test.serviceUpdateWithOptions(t, serviceName, []string{"--env", "TARGET=v2"})
-			rev2 := test.latestRevisionOfService(t, serviceName)
 
 			// make existing state: tag a revision as testing
 			tflags := []string{"--tag", fmt.Sprintf("%s=testing", rev1)}
