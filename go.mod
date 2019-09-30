@@ -1,7 +1,7 @@
 module knative.dev/client
 
 require (
-	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/aspenmesh/istio-client-go v0.0.0-20190913180823-8c72de05fa40
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/go-containerregistry v0.0.0-20190723205234-74f764b9c575 // indirect
 	github.com/google/licenseclassifier v0.0.0-20190711054124-c3068f13fcc3 // indirect
@@ -19,6 +19,7 @@ require (
 	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gotest.tools v2.2.0+incompatible
+	istio.io/api v0.0.0-20190925180116-1b594bcab992 // indirect
 	k8s.io/api v0.0.0-20190226173710-145d52631d00
 	k8s.io/apimachinery v0.0.0-20190221084156-01f179d85dbc
 	k8s.io/cli-runtime v0.0.0-20190325194458-f2b4781c3ae1
